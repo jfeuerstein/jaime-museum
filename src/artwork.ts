@@ -39,8 +39,6 @@ export const ARTWORK: ArtDef[] = [
   { src: '/art/13.png', aspect: 0.693, tags: ['fantasy', 'collage'] },
   // 14. Spider-Man hanging in web
   { src: '/art/14.png', aspect: 0.700, tags: ['hero', 'mask', 'fantasy'] },
-  // 15. Spider-Man variant with text "Action is the basis of success"
-  { src: '/art/15.png', aspect: 0.673, tags: ['hero', 'mask', 'fantasy'] },
   // 16. Toddler in chair with red columns / lightning
   { src: '/art/16.png', aspect: 0.719, tags: ['youth', 'portrait', 'identity'] },
   // 17. Gargoyle face with papel picado borders
