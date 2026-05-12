@@ -83,16 +83,31 @@ function wallKey(w: WallSegment): string {
   return `${w.cx}_${w.cy}_${w.side}`;
 }
 
-// Pick one sconce-bearing wall per side, avoiding walls that already hold a
-// painting. Sides whose middle is occupied walk outward to a free neighbour.
+// Horizontal padding from a painting's centre to where a sconce can sit on
+// the same wall. Paintings cap around 1.5m on the long side (so half-width
+// ≤ 0.75m); 1.2m gives a clear ~0.45m gap. Wall segments are CELL (4m)
+// wide so the offset still stays well within bounds.
+const SCONCE_OFFSET_FROM_PAINTING = 1.2;
+
+type SconcePlacement = {
+  wall: WallSegment;
+  /** Shift along the wall's tangent, in metres. Positive = +(tangent), 0 = centred. */
+  offset: number;
+};
+
+// Pick one sconce wall per side. Prefer the median wall and walk outward to
+// neighbouring free walls. If every wall on that side is already occupied by
+// a painting we still place a sconce on the median, shifted along the wall's
+// tangent so it sits with a comfortable gap beside the painting.
 function pickSconceWalls(
   roomIdx: number,
   wallsByRoom: WallSegment[][][],
   occupied: Set<string>,
-): WallSegment[] {
+  seed: number,
+): SconcePlacement[] {
   const sides = wallsByRoom[roomIdx];
   if (!sides) return [];
-  const picks: WallSegment[] = [];
+  const picks: SconcePlacement[] = [];
   for (let side = 0; side < 4; side++) {
     const ws = sides[side];
     if (ws.length === 0) continue;
@@ -101,6 +116,8 @@ function pickSconceWalls(
       return a.cy - b.cy;
     });
     const mid = Math.floor(sorted.length / 2);
+
+    // First pass: try to find a free wall, walking outward from the median.
     let chosen: WallSegment | null = null;
     for (let off = 0; off < sorted.length; off++) {
       for (const dir of [0, 1, -1]) {
@@ -115,7 +132,19 @@ function pickSconceWalls(
       }
       if (chosen) break;
     }
-    if (chosen) picks.push(chosen);
+
+    if (chosen) {
+      picks.push({ wall: chosen, offset: 0 });
+      continue;
+    }
+
+    // Fallback: every wall on this side has a painting. Take the median and
+    // offset the sconce along the wall's tangent to clear the painting. We
+    // pick the offset sign deterministically from (roomIdx, side, seed) so
+    // adjacent sides don't always lean the same direction.
+    const fallback = sorted[mid];
+    const flip = ((roomIdx * 31 + side * 7 + seed) >>> 0) & 1;
+    picks.push({ wall: fallback, offset: flip ? SCONCE_OFFSET_FROM_PAINTING : -SCONCE_OFFSET_FROM_PAINTING });
   }
   return picks;
 }
@@ -227,12 +256,20 @@ export function Fixtures({ plan, styles, paintings, seed }: Props) {
         const style = styles.rooms[info.roomIdx];
         const primary = pickPrimaryType(info.roomIdx, seed);
         const wantSconces = shouldHaveSconces(info.roomIdx, seed);
-        const sconces = wantSconces ? pickSconceWalls(info.roomIdx, wallsByRoom, occupiedWalls) : [];
+        const sconces = wantSconces
+          ? pickSconceWalls(info.roomIdx, wallsByRoom, occupiedWalls, seed)
+          : [];
         return (
           <Fragment key={info.roomIdx}>
             <PrimaryFixture info={info} style={style} type={primary} glowTex={glowTex} />
-            {sconces.map((w, i) => (
-              <Sconce key={i} wall={w} color={style.lightColor} glowTex={glowTex} />
+            {sconces.map((s, i) => (
+              <Sconce
+                key={i}
+                wall={s.wall}
+                tangentOffset={s.offset}
+                color={style.lightColor}
+                glowTex={glowTex}
+              />
             ))}
           </Fragment>
         );
@@ -270,18 +307,31 @@ export function Fixtures({ plan, styles, paintings, seed }: Props) {
 
 // A single wall sconce: visible mesh + wall glow decal, no point light. The
 // room's primary fixture supplies the actual illumination.
+//
+// tangentOffset slides the sconce along the wall's length so it can sit
+// beside a painting on the same wall segment with a comfortable gap.
 function Sconce({
   wall,
+  tangentOffset,
   color,
   glowTex,
 }: {
   wall: WallSegment;
+  tangentOffset: number;
   color: string;
   glowTex: THREE.Texture;
 }) {
+  // Tangent along the wall is perpendicular to the wall's normal, in the
+  // floor (XZ) plane. (-nz, nx) is one of the two perpendicular vectors.
+  const tx = -wall.nz;
+  const tz = wall.nx;
   return (
     <group
-      position={[wall.wx + wall.nx * 0.04, 2.4, wall.wz + wall.nz * 0.04]}
+      position={[
+        wall.wx + wall.nx * 0.04 + tx * tangentOffset,
+        2.4,
+        wall.wz + wall.nz * 0.04 + tz * tangentOffset,
+      ]}
       rotation={[0, wall.rotY, 0]}
     >
       <mesh position={[0, 0, 0.03]}>
@@ -358,7 +408,9 @@ function PrimaryFixture({
       );
 
     case 'ceiling_row': {
-      const count = Math.min(4, Math.max(2, info.longLen));
+      // One panel per cell along the long axis, +1 — keeps small rooms airy
+      // with at least 3 panels and lets larger rooms run up to 6.
+      const count = Math.min(6, Math.max(3, info.longLen + 1));
       const positions: [number, number][] = [];
       const startWorld =
         info.longAxis === 'x' ? info.minX * CELL + CELL / 2 : info.minZ * CELL + CELL / 2;
