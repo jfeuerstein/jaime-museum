@@ -17,7 +17,8 @@ html, body, #root {
 canvas {
   display: block;
   outline: none;
-  cursor: default;
+  /* No explicit cursor: the painting hover handlers set body.style.cursor to
+     'pointer', and the canvas inherits that. */
 }
 
 /* control HUD — animates from viewport center to bottom-left corner */
