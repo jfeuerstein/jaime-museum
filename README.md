@@ -57,25 +57,42 @@ public/
 
 ## Adding new artwork
 
-The artwork list is curated by hand. To add a piece:
+Source images live in `public/art-original/` (the untouched gallery photos)
+and the museum serves preprocessed copies from `public/art/`. Preprocessing
+runs offline: it auto-crops to the painting's content rectangle, downscales
+to ≤2048 on the long side (every GPU's `MAX_TEXTURE_SIZE` safety zone),
+applies a per-channel histogram stretch to remove warm-wall casts, and
+saves the result as WebP at quality 88.
 
-1. Drop the image into `public/art/` (PNG, JPEG, or WebP all fine).
-2. Open `src/artwork.ts` and append an entry to the `ARTWORK` array:
+To add a piece:
 
-   ```ts
-   { src: '/art/20.png', aspect: 0.78, tags: ['figure', 'sacred'] },
+1. Drop the photo into `public/art-original/` with the next free number
+   (e.g. `20.png`).
+2. Run the preprocessor:
+
+   ```sh
+   node scripts/preprocess-art.mjs
    ```
 
-   - `aspect` is `width / height` of the source image; if it's wrong the
-     auto-detected aspect from the loaded image will eventually take over,
-     but a correct value gives a tighter initial render.
+   It writes `public/art/20.webp` (and re-processes every other image — fast,
+   takes a couple of seconds total).
+
+3. Append an entry to `ARTWORK` in `src/artwork.ts`:
+
+   ```ts
+   { src: '/art/20.webp', aspect: 0.78, tags: ['figure', 'sacred'] },
+   ```
+
+   - `aspect` is `width / height` of the **preprocessed** image (the
+     preprocessor logs the output dimensions).
    - `tags` decide which poem candidates the viewer chooses from. Re-use
      existing tags so they intersect with the entries in `src/poems.ts`:
      `figure`, `body`, `portrait`, `identity`, `masculine`, `youth`,
      `sacred`, `mortality`, `hero`, `mask`, `fantasy`, `animal`, `cosmos`,
      `collage`, `whimsy`.
 
-3. Commit both files. The new piece appears in the next deploy.
+4. Commit `public/art-original/<n>.png`, `public/art/<n>.webp`, and the
+   updated `src/artwork.ts`. The new piece appears in the next deploy.
 
 ## Deploying with Vercel
 

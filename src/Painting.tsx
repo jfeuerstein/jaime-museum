@@ -1,16 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
 import { type PaintingPlacement } from './types';
 import { FRAMES } from './frames';
 import { ARTWORK } from './artwork';
-import { processArtwork } from './processArtwork';
 import { makePlacardTexture } from './textures';
-
-// Per-src cache of the cropped + level-adjusted CanvasTexture. Multiple
-// painting placements pointing at the same artwork share one GPU texture
-// here, and the heavy CPU work (Sobel + histogram passes) only runs once.
-const processedCache = new Map<string, THREE.CanvasTexture>();
 
 type Props = {
   placement: PaintingPlacement;
@@ -117,53 +111,13 @@ export function Painting({ placement, onSelect }: Props) {
   const frame = FRAMES[frameIdx];
   const art = ARTWORK[placement.paintingIdx % ARTWORK.length];
 
-  // Two-stage texture loading:
-  //   1. useTexture suspends until the raw artwork PNG has loaded — that
-  //      texture is shown immediately so the painting plane is never blank.
-  //   2. After mount we run the auto-crop + levels pass off the main render
-  //      and swap to a processed CanvasTexture. If processing throws (canvas
-  //      tainting, bad image, etc.) we keep the raw texture rather than
-  //      falling back to a black placeholder.
+  // Artwork is preprocessed offline (see scripts/preprocess-art.mjs) so the
+  // files in /art/ are already cropped, levels-stretched, and capped at
+  // 2048px on the long side. We just useTexture them directly.
   const baseTex = useTexture(frame.src);
-  const rawTex = useTexture(art.src);
-  rawTex.colorSpace = THREE.SRGBColorSpace;
-  rawTex.anisotropy = 4;
-
-  const [processedTex, setProcessedTex] = useState<THREE.CanvasTexture | null>(
-    () => processedCache.get(art.src) ?? null,
-  );
-
-  useEffect(() => {
-    if (processedTex) return;
-    const img = rawTex.image as HTMLImageElement | undefined;
-    if (!img || !img.complete) return;
-    let cancelled = false;
-    // Defer to the next macrotask so we don't block the current paint while
-    // running the Sobel/histogram passes; with N paintings it would otherwise
-    // freeze first paint for several hundred ms.
-    const id = window.setTimeout(() => {
-      if (cancelled) return;
-      try {
-        const canvas = processArtwork(img);
-        const t = new THREE.CanvasTexture(canvas);
-        t.colorSpace = THREE.SRGBColorSpace;
-        t.anisotropy = 4;
-        t.needsUpdate = true;
-        processedCache.set(art.src, t);
-        if (!cancelled) setProcessedTex(t);
-      } catch (e) {
-        // Keep the raw texture if anything goes wrong.
-        // eslint-disable-next-line no-console
-        console.warn('artwork processing failed for', art.src, e);
-      }
-    }, 0);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(id);
-    };
-  }, [art.src, rawTex.image, processedTex]);
-
-  const paintingTex: THREE.Texture = processedTex ?? rawTex;
+  const paintingTex = useTexture(art.src);
+  paintingTex.colorSpace = THREE.SRGBColorSpace;
+  paintingTex.anisotropy = 4;
 
   // Detect inner bbox + pixelate frame once per frame source.
   const frameInfo = useMemo(() => {
@@ -172,9 +126,8 @@ export function Painting({ placement, onSelect }: Props) {
     return getFrameInfo(frame.src, img);
   }, [baseTex, frame.src]);
 
-  // Painting aspect — derived from whichever texture is currently rendering
-  // (raw HTMLImageElement until processing is done, then the cropped canvas).
-  // Both expose width/height in pixels.
+  // Painting aspect — derived from the loaded image, with art.aspect as a
+  // first-frame fallback.
   const loadedImg = paintingTex.image as { width?: number; height?: number } | undefined;
   const paintingAspect =
     loadedImg && loadedImg.width && loadedImg.height

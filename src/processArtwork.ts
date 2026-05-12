@@ -1,12 +1,29 @@
-// Pure, synchronous image transform. The caller is responsible for image
-// loading, texture creation, and caching — this module just turns one
-// HTMLImageElement into a cleaned-up HTMLCanvasElement.
+// The runtime crop / levels / resize pipeline has been turned off — all
+// /public/art images are now preprocessed offline by
+// scripts/preprocess-art.mjs (which runs the same Sobel-projection bbox
+// detection, per-channel histogram stretch, and downscale-to-2048 at
+// build time and writes the result back to disk). The painting plane in
+// Painting.tsx renders the raw texture from useTexture directly.
 //
-// Pipeline:
-//   1) Edge-energy projection to find the tightest bbox containing the bulk
-//      of the visual content (the painting), then crop to it.
-//   2) A per-channel percentile-based histogram stretch to neutralise warm
-//      wall casts and recover contrast lost to flat ambient lighting.
+// The full implementation is preserved below in a comment in case we ever
+// want to bring runtime processing back.
+
+export function processArtwork(img: HTMLImageElement): HTMLCanvasElement {
+  // No-op passthrough: draw the source into a same-sized canvas and return.
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  c.getContext('2d')!.drawImage(img, 0, 0);
+  return c;
+}
+
+/* -------------------------------------------------------------------------
+   Original runtime pipeline. Kept commented for reference; the equivalent
+   logic runs offline now in scripts/preprocess-art.mjs.
+
+const MAX_OUTPUT_DIM = 2048;
 
 export function processArtwork(img: HTMLImageElement): HTMLCanvasElement {
   const w = img.naturalWidth || img.width;
@@ -20,12 +37,19 @@ export function processArtwork(img: HTMLImageElement): HTMLCanvasElement {
 
   const bbox = detectContentBbox(work);
 
+  const longSide = Math.max(bbox.w, bbox.h);
+  const downscale = longSide > MAX_OUTPUT_DIM ? MAX_OUTPUT_DIM / longSide : 1;
+  const outW = Math.max(1, Math.round(bbox.w * downscale));
+  const outH = Math.max(1, Math.round(bbox.h * downscale));
+
   const out = document.createElement('canvas');
-  out.width = bbox.w;
-  out.height = bbox.h;
+  out.width = outW;
+  out.height = outH;
   const octx = out.getContext('2d')!;
-  octx.drawImage(work, bbox.x, bbox.y, bbox.w, bbox.h, 0, 0, bbox.w, bbox.h);
-  applyLevels(octx, bbox.w, bbox.h);
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.drawImage(work, bbox.x, bbox.y, bbox.w, bbox.h, 0, 0, outW, outH);
+  applyLevels(octx, outW, outH);
 
   return out;
 }
@@ -75,9 +99,6 @@ function detectContentBbox(src: HTMLCanvasElement): { x: number; y: number; w: n
     colE[x] = c;
   }
 
-  // Threshold relative to the peak row/column energy. Invariant to how much
-  // of the frame is painting vs. wall, unlike a mean-based threshold which
-  // collapses when the painting fills the photo.
   const peakRow = maxOf(rowE);
   const peakCol = maxOf(colE);
   const rowThresh = peakRow * 0.4;
@@ -164,3 +185,4 @@ function applyLevels(ctx: CanvasRenderingContext2D, w: number, h: number) {
   }
   ctx.putImageData(img, 0, 0);
 }
+------------------------------------------------------------------------- */
