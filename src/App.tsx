@@ -29,9 +29,6 @@ function App() {
     tex: THREE.Texture;
   } | null>(null);
   const [booting, setBooting] = useState(true);
-  const [adminOpen, setAdminOpen] = useState(
-    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('admin'),
-  );
 
   return (
     <>
@@ -54,7 +51,7 @@ function App() {
             onSelect={(placement, tex) => setSelected({ placement, tex })}
           />
         ))}
-        <Player plan={plan} paused={selected !== null || adminOpen} />
+        <Player plan={plan} paused={selected !== null} />
       </Canvas>
       <PaintingViewer
         paintingTex={selected?.tex ?? null}
@@ -70,16 +67,6 @@ function App() {
       />
       <ControlsHUD booting={booting} />
       {booting && <BootTerminal onDone={() => setBooting(false)} />}
-      {adminOpen && (
-        <AdminPanel
-          onClose={() => {
-            setAdminOpen(false);
-            const url = new URL(window.location.href);
-            url.searchParams.delete('admin');
-            window.history.replaceState({}, '', url.toString());
-          }}
-        />
-      )}
     </>
   );
 }
