@@ -242,3 +242,86 @@ canvas {
   }
 }
 
+
+/* Music player — small play/pause button in the bottom-right corner, with a
+   "now playing" toast that slides in from the right when a track starts. */
+.music-btn {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 6;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(233, 220, 193, 0.22);
+  background: rgba(15, 12, 10, 0.55);
+  color: rgba(233, 220, 193, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.music-btn:hover:not(:disabled) {
+  background: rgba(15, 12, 10, 0.85);
+  color: #fff;
+  border-color: rgba(233, 220, 193, 0.5);
+}
+
+.music-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.music-btn-playing {
+  color: #ffd9a8;
+  border-color: rgba(255, 217, 168, 0.4);
+}
+
+.music-toast {
+  position: fixed;
+  right: 28px;
+  bottom: 80px;
+  z-index: 6;
+  min-width: 200px;
+  max-width: 320px;
+  padding: 11px 16px 13px;
+  background: rgba(15, 12, 10, 0.85);
+  border: 1px solid rgba(233, 220, 193, 0.18);
+  color: #e9dcc1;
+  font-family: 'Iowan Old Style', 'Garamond', 'Cormorant Garamond', Georgia, serif;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.music-toast-show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.music-toast-label {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(233, 220, 193, 0.55);
+  margin-bottom: 4px;
+}
+
+.music-toast-title {
+  font-size: 15px;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.music-toast-artist {
+  font-size: 12px;
+  font-style: normal;
+  color: rgba(233, 220, 193, 0.65);
+  margin-top: 2px;
+  letter-spacing: 0.03em;
+}

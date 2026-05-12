@@ -14,7 +14,7 @@ function mulberry32(seed: number) {
   };
 }
 
-export function placePaintings(plan: Floorplan, seed = 17, density = 0.55): PaintingPlacement[] {
+export function placePaintings(plan: Floorplan, seed = 17, density = 0.7): PaintingPlacement[] {
   const rand = mulberry32(seed);
   // Don't put paintings on walls of doorway-like cells (corridor cells, where opposite-side wall touches).
   // Corridor cells: a 1-wide thoroughfare. Detect by counting floor neighbors == 2 in a line.

@@ -11,6 +11,7 @@ import { PaintingViewer } from './PaintingViewer';
 import { ControlsHUD } from './ControlsHUD';
 import { BootTerminal } from './BootTerminal';
 import { Fixtures } from './Fixtures';
+import { MusicPlayer } from './MusicPlayer';
 import { buildRoomStyles } from './roomStyle';
 import { ARTWORK } from './artwork';
 import { pickPoem } from './poems';
@@ -66,6 +67,7 @@ function App() {
         onClose={() => setSelected(null)}
       />
       <ControlsHUD booting={booting} />
+      <MusicPlayer />
       {booting && <BootTerminal onDone={() => setBooting(false)} />}
     </>
   );

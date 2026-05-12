@@ -334,7 +334,248 @@ Ringed with the azure world, he stands.`,
     author: 'Alfred, Lord Tennyson',
     source: 'The Eagle',
     year: '1851',
-    tags: ['hero', 'animal', 'cosmos'],
+    tags: ['hero', 'animal', 'cosmos', 'landscape'],
+  },
+  {
+    text: `I wandered lonely as a cloud
+That floats on high o'er vales and hills,
+When all at once I saw a crowd,
+A host, of golden daffodils;`,
+    author: 'William Wordsworth',
+    source: 'I Wandered Lonely as a Cloud',
+    year: '1807',
+    tags: ['solitude', 'landscape', 'youth'],
+  },
+  {
+    text: `I will arise and go now, and go to Innisfree,
+And a small cabin build there, of clay and wattles made:
+Nine bean rows will I have there, a hive for the honey bee,
+And live alone in the bee-loud glade.`,
+    author: 'W. B. Yeats',
+    source: 'The Lake Isle of Innisfree',
+    year: '1888',
+    tags: ['solitude', 'landscape', 'domestic', 'dream'],
+  },
+  {
+    text: `There's a certain Slant of light,
+Winter Afternoons —
+That oppresses, like the Heft
+Of Cathedral Tunes —`,
+    author: 'Emily Dickinson',
+    source: 'Poem 320',
+    year: 'c. 1862',
+    tags: ['light', 'mortality', 'solitude', 'sacred'],
+  },
+  {
+    text: `I have been one acquainted with the night.
+I have walked out in rain — and back in rain.
+I have outwalked the furthest city light.`,
+    author: 'Robert Frost',
+    source: 'Acquainted with the Night',
+    year: '1928',
+    tags: ['solitude', 'landscape', 'mortality', 'light'],
+  },
+  {
+    text: `Take this kiss upon the brow!
+And, in parting from you now,
+Thus much let me avow —
+You are not wrong, who deem
+That my days have been a dream;`,
+    author: 'Edgar Allan Poe',
+    source: 'A Dream Within a Dream',
+    year: '1849',
+    tags: ['dream', 'mortality', 'identity'],
+  },
+  {
+    text: `When I heard the learn'd astronomer,
+When the proofs, the figures, were ranged in columns before me…
+How soon, unaccountable, I became tired and sick,
+Till rising and gliding out I wander'd off by myself,
+In the mystical moist night-air, and from time to time,
+Look'd up in perfect silence at the stars.`,
+    author: 'Walt Whitman',
+    source: "When I Heard the Learn'd Astronomer",
+    year: '1865',
+    tags: ['solitude', 'cosmos', 'landscape'],
+  },
+  {
+    text: `The fog comes
+on little cat feet.
+It sits looking
+over harbor and city
+on silent haunches
+and then moves on.`,
+    author: 'Carl Sandburg',
+    source: 'Fog',
+    year: '1916',
+    tags: ['landscape', 'animal', 'whimsy'],
+  },
+  {
+    text: `When you are old and grey and full of sleep,
+And nodding by the fire, take down this book,
+And slowly read, and dream of the soft look
+Your eyes had once, and of their shadows deep;`,
+    author: 'W. B. Yeats',
+    source: 'When You Are Old',
+    year: '1893',
+    tags: ['portrait', 'solitude', 'mortality', 'identity', 'domestic'],
+  },
+  {
+    text: `I hear America singing, the varied carols I hear,
+Those of mechanics, each one singing his as it should be blithe and strong,
+The carpenter singing his as he measures his plank or beam…`,
+    author: 'Walt Whitman',
+    source: 'I Hear America Singing',
+    year: '1860',
+    tags: ['domestic', 'collage', 'identity'],
+  },
+  {
+    text: `Tell all the truth but tell it slant —
+Success in Circuit lies
+Too bright for our infirm Delight
+The Truth's superb surprise`,
+    author: 'Emily Dickinson',
+    source: 'Poem 1263',
+    year: 'c. 1872',
+    tags: ['light', 'identity', 'whimsy'],
+  },
+  {
+    text: `The year's at the spring,
+And day's at the morn;
+Morning's at seven;
+The hill-side's dew-pearled;
+The lark's on the wing;
+The snail's on the thorn:
+God's in His heaven —
+All's right with the world!`,
+    author: 'Robert Browning',
+    source: "Pippa's Song",
+    year: '1841',
+    tags: ['light', 'landscape', 'sacred'],
+  },
+  {
+    text: `This darksome burn, horseback brown,
+His rollrock highroad roaring down,
+In coop and in comb the fleece of his foam
+Flutes and low to the lake falls home.`,
+    author: 'Gerard Manley Hopkins',
+    source: 'Inversnaid',
+    year: '1881',
+    tags: ['landscape', 'sacred', 'dream'],
+  },
+  {
+    text: `She dwelt among the untrodden ways
+Beside the springs of Dove,
+A Maid whom there were none to praise
+And very few to love:`,
+    author: 'William Wordsworth',
+    source: 'She Dwelt Among the Untrodden Ways',
+    year: '1800',
+    tags: ['solitude', 'portrait', 'mortality'],
+  },
+  {
+    text: `A noiseless patient spider,
+I mark'd where on a little promontory it stood isolated,
+Mark'd how to explore the vacant vast surrounding,
+It launch'd forth filament, filament, filament, out of itself,`,
+    author: 'Walt Whitman',
+    source: 'A Noiseless Patient Spider',
+    year: '1868',
+    tags: ['animal', 'solitude', 'dream'],
+  },
+  {
+    text: `There will come soft rains and the smell of the ground,
+And swallows circling with their shimmering sound;
+
+And frogs in the pools, singing at night,
+And wild plum trees in tremulous white;`,
+    author: 'Sara Teasdale',
+    source: 'There Will Come Soft Rains',
+    year: '1920',
+    tags: ['landscape', 'mortality', 'dream', 'animal'],
+  },
+  {
+    text: `My long two-pointed ladder's sticking through a tree
+Toward heaven still,
+And there's a barrel that I didn't fill
+Beside it, and there may be two or three
+Apples I didn't pick upon some bough.
+But I am done with apple-picking now.`,
+    author: 'Robert Frost',
+    source: 'After Apple-Picking',
+    year: '1914',
+    tags: ['domestic', 'dream', 'solitude', 'still_life'],
+  },
+  {
+    text: `Remember me when I am gone away,
+Gone far away into the silent land;
+When you can no more hold me by the hand,
+Nor I half turn to go yet turning stay.`,
+    author: 'Christina Rossetti',
+    source: 'Remember',
+    year: '1862',
+    tags: ['mortality', 'portrait', 'identity', 'solitude'],
+  },
+  {
+    text: `The trees are in their autumn beauty,
+The woodland paths are dry,
+Under the October twilight the water
+Mirrors a still sky;
+Upon the brimming water among the stones
+Are nine-and-fifty swans.`,
+    author: 'W. B. Yeats',
+    source: 'The Wild Swans at Coole',
+    year: '1917',
+    tags: ['animal', 'landscape', 'solitude'],
+  },
+  {
+    text: `I placed a jar in Tennessee,
+And round it was, upon a hill.
+It made the slovenly wilderness
+Surround that hill.`,
+    author: 'Wallace Stevens',
+    source: 'Anecdote of the Jar',
+    year: '1919',
+    tags: ['still_life', 'landscape', 'identity'],
+  },
+  {
+    text: `One must have a mind of winter
+To regard the frost and the boughs
+Of the pine-trees crusted with snow;`,
+    author: 'Wallace Stevens',
+    source: 'The Snow Man',
+    year: '1921',
+    tags: ['landscape', 'solitude', 'cosmos'],
+  },
+  {
+    text: `Whose woods these are I think I know.
+His house is in the village though;
+He will not see me stopping here
+To watch his woods fill up with snow.`,
+    author: 'Robert Frost',
+    source: 'Stopping by Woods on a Snowy Evening',
+    year: '1923',
+    tags: ['solitude', 'landscape', 'domestic'],
+  },
+  {
+    text: `Had I the heavens' embroidered cloths,
+Enwrought with golden and silver light,
+The blue and the dim and the dark cloths
+Of night and light and the half-light…`,
+    author: 'W. B. Yeats',
+    source: 'He Wishes for the Cloths of Heaven',
+    year: '1899',
+    tags: ['light', 'dream', 'sacred'],
+  },
+  {
+    text: `Western wind, when will thou blow,
+The small rain down can rain?
+Christ, if my love were in my arms
+And I in my bed again!`,
+    author: 'Anonymous (Middle English)',
+    source: 'Western Wind',
+    year: 'c. 1500',
+    tags: ['solitude', 'landscape', 'domestic', 'youth'],
   },
 ];
 
