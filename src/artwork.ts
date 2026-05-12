@@ -10,12 +10,7 @@ export type ArtDef = {
   tags: string[];
 };
 
-// User-uploaded artwork lives in this JSON file; it's appended by the
-// dev-only admin upload endpoint (see vite.config.ts) and merged in below.
-// Vite's HMR picks up the JSON rewrite automatically.
-import EXTRA_ARTWORK from './extraArtwork.json';
-
-const BASE_ARTWORK: ArtDef[] = [
+export const ARTWORK: ArtDef[] = [
   // 1. Nude male figure with halo, charcoal-style on craft paper
   { src: '/art/1.png', aspect: 0.867, tags: ['figure', 'body', 'masculine', 'sacred'] },
   // 2. Bearded male portrait with decorative tiles
@@ -55,5 +50,3 @@ const BASE_ARTWORK: ArtDef[] = [
   // 19. "Obituaries" — portrait with Watership Down passage
   { src: '/art/19.png', aspect: 0.761, tags: ['portrait', 'mortality', 'masculine', 'identity'] },
 ];
-
-export const ARTWORK: ArtDef[] = [...BASE_ARTWORK, ...(EXTRA_ARTWORK as ArtDef[])];

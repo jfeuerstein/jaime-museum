@@ -11,7 +11,6 @@ import { PaintingViewer } from './PaintingViewer';
 import { ControlsHUD } from './ControlsHUD';
 import { BootTerminal } from './BootTerminal';
 import { Fixtures } from './Fixtures';
-import { AdminPanel } from './AdminPanel';
 import { buildRoomStyles } from './roomStyle';
 import { ARTWORK } from './artwork';
 import { pickPoem } from './poems';
