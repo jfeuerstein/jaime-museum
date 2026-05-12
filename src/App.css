@@ -1,0 +1,385 @@
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #0a0806;
+  overflow: hidden;
+  font-family: 'Iowan Old Style', 'Garamond', 'Cormorant Garamond', Georgia, serif;
+  color: #e9dcc1;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+canvas {
+  display: block;
+  outline: none;
+  cursor: default;
+}
+
+/* control HUD — animates from viewport center to bottom-left corner */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #e9dcc1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  transform-origin: center center;
+  /* translate uses calc with viewport units — start/end values resolve to
+     pixels when transition begins, then interpolate smoothly. */
+  transition:
+    transform 1.25s cubic-bezier(0.65, 0, 0.2, 1),
+    opacity 0.9s ease;
+}
+
+.hud-hidden {
+  opacity: 0;
+  transform: translate(calc(50vw - 50%), calc(50vh - 50%)) scale(1.7);
+}
+
+.hud-central {
+  opacity: 1;
+  transform: translate(calc(50vw - 50%), calc(50vh - 50%)) scale(1.55);
+}
+
+.hud-corner {
+  opacity: 0.85;
+  transform: translate(28px, calc(100vh - 100% - 28px)) scale(1);
+}
+
+.hud-line {
+  font-style: italic;
+}
+
+/* painting viewer overlay */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 6, 4, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.55s ease, backdrop-filter 0.55s ease, background 0.55s ease;
+}
+
+.viewer.open {
+  pointer-events: auto;
+  opacity: 1;
+  background: rgba(8, 6, 4, 0.78);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+}
+
+.viewer-inner {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  width: min(1200px, 92vw);
+  height: min(80vh, 720px);
+  padding: 28px 36px;
+}
+
+.viewer-art {
+  flex: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform 0.7s ease 0.1s, opacity 0.7s ease 0.1s;
+}
+
+.viewer.open .viewer-art {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.viewer-art img {
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.5),
+    0 6px 12px rgba(0, 0, 0, 0.45);
+  background: #1a1410;
+  image-rendering: optimizeQuality;
+}
+
+.viewer-desc {
+  flex: 1;
+  max-width: 380px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: #e9dcc1;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 0.7s ease 0.25s, transform 0.7s ease 0.25s;
+}
+
+.viewer.open .viewer-desc {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.viewer-desc p {
+  margin: 0;
+  font-style: italic;
+  letter-spacing: 0.005em;
+}
+
+.viewer-poem {
+  margin: 0 0 14px 0;
+  font-family: inherit;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
+  white-space: pre-wrap;
+  color: #e9dcc1;
+}
+
+.viewer-cite {
+  margin: 0;
+  font-size: 13px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: rgba(233, 220, 193, 0.65);
+}
+
+.viewer-cite i {
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .viewer-inner {
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px;
+  }
+  .viewer-desc {
+    max-width: 100%;
+    font-size: 15px;
+  }
+}
+
+/* Boot terminal — covers the canvas while it loads */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #050606;
+  color: #6cff8a;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  padding: 36px 40px;
+  overflow: hidden;
+  transition: opacity 0.7s ease;
+  text-shadow: 0 0 6px rgba(108, 255, 138, 0.35);
+}
+
+/* faint scanline texture */
+.boot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0) 2px,
+      rgba(255, 255, 255, 0.04) 3px,
+      rgba(255, 255, 255, 0) 4px
+    );
+  pointer-events: none;
+}
+
+.boot-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-inner {
+  position: relative;
+  z-index: 1;
+  white-space: pre;
+  line-height: 1.55;
+}
+
+.boot-line {
+  letter-spacing: 0.03em;
+}
+
+.boot-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 13px;
+  background: currentColor;
+  margin-left: 6px;
+  vertical-align: -2px;
+  animation: boot-blink 0.9s infinite step-end;
+  box-shadow: 0 0 6px currentColor;
+}
+
+@keyframes boot-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Admin upload panel — only mounted when the URL has ?admin */
+.admin {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 6, 4, 0.78);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #e9dcc1;
+}
+
+.admin-card {
+  width: min(560px, 92vw);
+  background: #15110d;
+  border: 1px solid rgba(233, 220, 193, 0.18);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  padding: 22px 26px 24px;
+}
+
+.admin-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(233, 220, 193, 0.65);
+  border-bottom: 1px solid rgba(233, 220, 193, 0.12);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-close {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.admin-close:hover {
+  color: #fff;
+}
+
+.admin-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(233, 220, 193, 0.75);
+}
+
+.admin-row input[type='text'],
+.admin-row input[type='password'] {
+  background: #0c0a08;
+  color: #e9dcc1;
+  border: 1px solid rgba(233, 220, 193, 0.18);
+  padding: 9px 11px;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  outline: none;
+}
+
+.admin-row input:focus {
+  border-color: rgba(233, 220, 193, 0.45);
+}
+
+.admin-row input[type='file'] {
+  font-family: inherit;
+  font-size: 13px;
+  color: rgba(233, 220, 193, 0.75);
+  text-transform: none;
+}
+
+.admin-hint {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(233, 220, 193, 0.55);
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.admin-hint code {
+  background: rgba(233, 220, 193, 0.08);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 11px;
+}
+
+.admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.admin-actions button {
+  background: #e9dcc1;
+  color: #15110d;
+  border: 0;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.admin-actions button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.admin-error {
+  margin: 0;
+  color: #ff8d72;
+  font-size: 13px;
+}
+
+.admin-ok {
+  margin: 0;
+  color: #93d29a;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
