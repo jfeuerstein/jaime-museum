@@ -79,9 +79,27 @@ export function placePaintings(plan: Floorplan, seed = 17, density = 0.7): Paint
   return placements;
 }
 
-export function placeDecor(plan: Floorplan, seed = 33): DecorPlacement[] {
+export function placeDecor(
+  plan: Floorplan,
+  paintings: PaintingPlacement[],
+  seed = 33,
+): DecorPlacement[] {
   const rand = mulberry32(seed);
   const out: DecorPlacement[] = [];
+
+  // Index the painting placements by cell so the bench logic below can ask:
+  // "is there a painting on the wall in direction D from cell (x, y)?"
+  // Sides: 0=N, 1=E, 2=S, 3=W (matches generate.ts).
+  const paintingsAt = new Map<string, Set<number>>();
+  for (const p of paintings) {
+    const key = `${p.wall.cx}_${p.wall.cy}`;
+    let set = paintingsAt.get(key);
+    if (!set) {
+      set = new Set();
+      paintingsAt.set(key, set);
+    }
+    set.add(p.wall.side);
+  }
   // For each floor cell, determine if it's a "room interior" cell (all 4 neighbors floor),
   // and if its 8 neighbors are mostly floor. Place benches in such cells with low probability,
   // place plants on cells with 1 wall neighbor (corner-ish cells in rooms).
@@ -92,47 +110,77 @@ export function placeDecor(plan: Floorplan, seed = 33): DecorPlacement[] {
       const s = isFloor(plan, x, y + 1);
       const e = isFloor(plan, x + 1, y);
       const w = isFloor(plan, x - 1, y);
+      const n2 = isFloor(plan, x, y - 2);
+      const s2 = isFloor(plan, x, y + 2);
+      const e2 = isFloor(plan, x + 2, y);
+      const w2 = isFloor(plan, x - 2, y);
       const cnt = +n + +s + +e + +w;
+      const cnt2 = +n2 + +s2 + +e2 + +w2;
       const wx = x * CELL;
       const wz = y * CELL;
-      if (cnt === 4) {
-        // interior — bench, rare
-        if (rand() < 0.08) {
+      if (cnt === 4 && cnt2 <= 4) {
+        // Bench rule: must face a painting that's two cells away on the same
+        // axis (so the bench sits with a single empty cell between it and the
+        // painted wall). For each cardinal direction we check the neighbour
+        // cell one step away — if that cell is a floor cell AND has a painting
+        // on the far wall (the wall further in that direction), that's a
+        // viable facing.
+        //   Bench at (x, y) facing N  ⇒  paintings[(x, y-1)].has(N)
+        //   Bench at (x, y) facing E  ⇒  paintings[(x+1, y)].has(E)
+        //   Bench at (x, y) facing S  ⇒  paintings[(x, y+1)].has(S)
+        //   Bench at (x, y) facing W  ⇒  paintings[(x-1, y)].has(W)
+        const facings: number[] = [];
+        if (paintingsAt.get(`${x}_${y - 1}`)?.has(0)) facings.push(0); // N: rotY = 0
+        if (paintingsAt.get(`${x + 1}_${y}`)?.has(1)) facings.push(-Math.PI / 2); // E
+        if (paintingsAt.get(`${x}_${y + 1}`)?.has(2)) facings.push(Math.PI); // S
+        if (paintingsAt.get(`${x - 1}_${y}`)?.has(3)) facings.push(Math.PI / 2); // W
+        if (facings.length > 0 && rand() < 0.55) {
+          const rotY = facings[Math.floor(rand() * facings.length)];
           out.push({
             kind: 'bench',
             x: wx,
             z: wz,
-            rotY: rand() < 0.5 ? 0 : Math.PI / 2,
+            rotY,
             variant: Math.floor(rand() * 2),
           });
         }
       } else if (cnt === 3) {
-        // wall on one side — plant in the inside corner near that wall
+        // wall on one side — plant in the inside corner near that wall.
+        // Skip if the cell's wall on that side already holds a painting; we
+        // don't want a plant smack in front of artwork.
         if (rand() < 0.25) {
-          // place plant slightly offset toward the wall
           let dx = 0;
           let dz = 0;
-          if (!n) dz = -CELL * 0.32;
-          else if (!s) dz = CELL * 0.32;
-          else if (!e) dx = CELL * 0.32;
-          else if (!w) dx = -CELL * 0.32;
-          out.push({
-            kind: 'plant',
-            x: wx + dx,
-            z: wz + dz,
-            rotY: rand() * Math.PI * 2,
-            variant: Math.floor(rand() * 3),
-          });
+          let side = -1;
+          if (!n) { dz = -CELL * 0.32; side = 0; }
+          else if (!s) { dz = CELL * 0.32; side = 2; }
+          else if (!e) { dx = CELL * 0.32; side = 1; }
+          else if (!w) { dx = -CELL * 0.32; side = 3; }
+          const facingHasPainting = paintingsAt.get(`${x}_${y}`)?.has(side) ?? false;
+          if (!facingHasPainting) {
+            out.push({
+              kind: 'plant',
+              x: wx + dx,
+              z: wz + dz,
+              rotY: rand() * Math.PI * 2,
+              variant: Math.floor(rand() * 3),
+            });
+          }
         }
       } else if (cnt === 2) {
-        // potential corner cell — plant in the inside corner
+        // potential corner cell — plant in the inside corner.
+        // Skip if either of the two adjacent walls holds a painting.
         if (rand() < 0.4) {
           let dx = 0;
           let dz = 0;
-          if (!n) dz = -CELL * 0.32;
-          if (!s) dz = CELL * 0.32;
-          if (!e) dx = CELL * 0.32;
-          if (!w) dx = -CELL * 0.32;
+          const sides: number[] = [];
+          if (!n) { dz = -CELL * 0.32; sides.push(0); }
+          if (!s) { dz = CELL * 0.32; sides.push(2); }
+          if (!e) { dx = CELL * 0.32; sides.push(1); }
+          if (!w) { dx = -CELL * 0.32; sides.push(3); }
+          const painted = paintingsAt.get(`${x}_${y}`);
+          const blocked = painted && sides.some((s) => painted.has(s));
+          if (blocked) continue;
           out.push({
             kind: 'plant',
             x: wx + dx,

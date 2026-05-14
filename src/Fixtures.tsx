@@ -1,4 +1,5 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
   CELL,
@@ -8,6 +9,45 @@ import {
   type WallSegment,
 } from './types';
 import type { RoomStyle } from './roomStyle';
+
+// FlickerLight wraps <pointLight> with a per-frame intensity wobble. The
+// wobble is built from two slow sines + a tiny noise term so each fixture
+// reads as a real bulb without obviously pulsing. `phase` lets each fixture
+// move independently of its neighbours.
+function FlickerLight({
+  position,
+  color,
+  intensity,
+  distance,
+  decay = 2,
+  phase = 0,
+}: {
+  position: [number, number, number];
+  color: string;
+  intensity: number;
+  distance: number;
+  decay?: number;
+  phase?: number;
+}) {
+  const lightRef = useRef<THREE.PointLight | null>(null);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime + phase;
+    // Two sines at different rates → quasi-periodic; ±2.5% on intensity.
+    const wobble = Math.sin(t * 1.6) * 0.018 + Math.sin(t * 0.7 + phase) * 0.012;
+    const l = lightRef.current;
+    if (l) l.intensity = intensity * (1 + wobble);
+  });
+  return (
+    <pointLight
+      ref={lightRef}
+      position={position}
+      color={color}
+      intensity={intensity}
+      distance={distance}
+      decay={decay}
+    />
+  );
+}
 
 // One PRIMARY fixture is chosen per room — that fixture also supplies the
 // room's only point light, keeping our overall light count low.
@@ -292,12 +332,12 @@ export function Fixtures({ plan, styles, paintings, seed }: Props) {
             opacity={0.5}
             tex={glowTex}
           />
-          <pointLight
+          <FlickerLight
             position={[l.x, 3.4, l.z]}
             color={styles.corridor.lightColor}
             intensity={styles.corridor.lightIntensity * 1.2}
             distance={styles.corridor.lightDistance + 1}
-            decay={2}
+            phase={i * 1.37}
           />
         </group>
       ))}
@@ -397,12 +437,12 @@ function PrimaryFixture({
             opacity={0.5}
             tex={glowTex}
           />
-          <pointLight
+          <FlickerLight
             position={[cx, 2.85, cz]}
             color={style.lightColor}
             intensity={style.lightIntensity * 1.1}
             distance={style.lightDistance + 1}
-            decay={2}
+            phase={info.roomIdx * 0.91}
           />
         </group>
       );
@@ -448,12 +488,12 @@ function PrimaryFixture({
               />
             </group>
           ))}
-          <pointLight
+          <FlickerLight
             position={[cx, 3.5, cz]}
             color={style.lightColor}
             intensity={style.lightIntensity * 1.15}
             distance={style.lightDistance + 2}
-            decay={2}
+            phase={info.roomIdx * 1.13}
           />
         </group>
       );
@@ -490,12 +530,12 @@ function PrimaryFixture({
               </mesh>
             </group>
           ))}
-          <pointLight
+          <FlickerLight
             position={[cx, 1.5, cz]}
             color={style.lightColor}
             intensity={style.lightIntensity * 1.1}
             distance={style.lightDistance + 3}
-            decay={2}
+            phase={info.roomIdx * 0.71}
           />
         </group>
       );
@@ -537,12 +577,12 @@ function PrimaryFixture({
             opacity={0.45}
             tex={glowTex}
           />
-          <pointLight
+          <FlickerLight
             position={[cx, 3.6, cz]}
             color={style.lightColor}
             intensity={style.lightIntensity * 1.3}
             distance={style.lightDistance + 2}
-            decay={2}
+            phase={info.roomIdx * 0.43}
           />
         </group>
       );

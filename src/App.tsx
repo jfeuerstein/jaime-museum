@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { EffectComposer, Noise, Vignette } from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { generateFloorplan } from './generate';
 import { placeDecor, placePaintings } from './placements';
@@ -12,6 +14,7 @@ import { ControlsHUD } from './ControlsHUD';
 import { BootTerminal } from './BootTerminal';
 import { Fixtures } from './Fixtures';
 import { MusicPlayer } from './MusicPlayer';
+import { DustMotes } from './DustMotes';
 import { buildRoomStyles } from './roomStyle';
 import { ARTWORK } from './artwork';
 import { pickPoem } from './poems';
@@ -22,7 +25,7 @@ function App() {
   const seed = useMemo(() => Math.floor(Math.random() * 1_000_000), []);
   const plan = useMemo(() => generateFloorplan(seed), [seed]);
   const paintings = useMemo(() => placePaintings(plan, seed + 1), [plan, seed]);
-  const decor = useMemo(() => placeDecor(plan, seed + 2), [plan, seed]);
+  const decor = useMemo(() => placeDecor(plan, paintings, seed + 2), [plan, paintings, seed]);
   const styles = useMemo(() => buildRoomStyles(plan.numRooms, seed + 3), [plan, seed]);
 
   const [selected, setSelected] = useState<{
@@ -53,6 +56,15 @@ function App() {
           />
         ))}
         <Player plan={plan} paused={selected !== null} />
+        <DustMotes />
+        <EffectComposer multisampling={0}>
+          <Vignette
+            offset={0.28}
+            darkness={0.55}
+            blendFunction={BlendFunction.NORMAL}
+          />
+          <Noise opacity={0.035} premultiply blendFunction={BlendFunction.SOFT_LIGHT} />
+        </EffectComposer>
       </Canvas>
       <PaintingViewer
         paintingTex={selected?.tex ?? null}

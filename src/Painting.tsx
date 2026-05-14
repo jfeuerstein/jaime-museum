@@ -6,6 +6,27 @@ import { FRAMES } from './frames';
 import { ARTWORK } from './artwork';
 import { makePlacardTexture } from './textures';
 
+// Shared radial-gradient texture for the painting wall glow. Created once
+// (lazily) and reused across every painting placement.
+let paintingGlowTex: THREE.CanvasTexture | null = null;
+function getPaintingGlowTex(): THREE.CanvasTexture {
+  if (paintingGlowTex) return paintingGlowTex;
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 128;
+  const ctx = c.getContext('2d')!;
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.45, '#7a7a7a');
+  g.addColorStop(1, '#000000');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  paintingGlowTex = new THREE.CanvasTexture(c);
+  paintingGlowTex.colorSpace = THREE.SRGBColorSpace;
+  paintingGlowTex.needsUpdate = true;
+  return paintingGlowTex;
+}
+
 type Props = {
   placement: PaintingPlacement;
   onSelect: (p: PaintingPlacement, paintingTex: THREE.Texture) => void;
@@ -169,8 +190,32 @@ export function Painting({ placement, onSelect }: Props) {
 
   const frameTexture = frameInfo?.texture ?? baseTex;
 
+  // Warm halo on the wall around the painting — a soft additive plane that
+  // sits flush with the wall surface (behind the painting & frame planes).
+  // Reads as gallery lighting catching the canvas.
+  const glowTex = useMemo(() => getPaintingGlowTex(), []);
+  const glowW = frameW * 1.55;
+  const glowH = frameH * 1.55;
+  const glowOff = 0.012; // wall surface is at offset 0; sit just barely in front of it
+  const glowX = wall.wx + wall.nx * glowOff;
+  const glowZ = wall.wz + wall.nz * glowOff;
+  // Warm gallery-lighting tone, leans cream/amber.
+  const glowColor = '#ffd9a8';
+
   return (
     <group>
+      <mesh position={[glowX, eyeY, glowZ]} rotation={[0, wall.rotY, 0]}>
+        <planeGeometry args={[glowW, glowH]} />
+        <meshBasicMaterial
+          map={glowTex}
+          color={glowColor}
+          transparent
+          opacity={0.32}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
       <mesh position={[px, eyeY, pz]} rotation={[0, wall.rotY, 0]}>
         <planeGeometry args={[paintW, paintH]} />
         <meshBasicMaterial map={paintingTex} toneMapped={false} />
