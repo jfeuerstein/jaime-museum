@@ -58,6 +58,24 @@ canvas {
   transform: translate(28px, calc(100vh - 100% - 28px)) scale(1);
 }
 
+/* Phone fallback — large centred apology that never animates anywhere.
+   Stays put no matter what the desktop HUD's phase machine is doing. */
+.hud-mobile {
+  opacity: 1;
+  transform: translate(calc(50vw - 50%), calc(50vh - 50%)) scale(1);
+  width: min(86vw, 360px);
+  text-align: center;
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  padding: 26px 28px;
+  background: rgba(15, 12, 10, 0.72);
+  border: 1px solid rgba(233, 220, 193, 0.18);
+  color: #e9dcc1;
+  transition: none;
+}
+
 .hud-line {
   font-style: italic;
 }
